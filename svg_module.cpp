@@ -1,64 +1,75 @@
 #include <iostream>
 #include <vector>
+#include <sstream>
+#include <string>
 
 using namespace std;
 
-void svg_begin(double width, double height) {
-    cout << "<?xml version='1.0' encoding='UTF-8'?>\n";
-    cout << "<svg ";
-    cout << "width='" << width << "' ";
-    cout << "height='" << height << "' ";
-    cout << "viewBox='0 0 " << width << " " << height << "' ";
-    cout << "xmlns='http://www.w3.org/2000/svg'>\n";
+string svg_begin(double width, double height) {
+    ostringstream strs;
+    strs << "<?xml version='1.0' encoding='UTF-8'?>\n";
+    strs << "<svg ";
+    strs << "width='" << width << "' ";
+    strs << "height='" << height << "' ";
+    strs << "viewBox='0 0 " << width << " " << height << "' ";
+    strs << "xmlns='http://www.w3.org/2000/svg'>\n";
+    string output = strs.str();
+    return output;
 }
 
-void svg_end() {
-    cout << "</svg>\n";
+string svg_end() {
+    ostringstream strs;
+    strs << "</svg>\n";
+    string output = strs.str();
+    return output;
 }
 
-void svg_rect(double x, double y, double width, double height, string stroke, string fill)
-{
-    cout << "<rect x='"<<x<<"' y='"<<y<<"' width='"<<width<<"' height='"<<height<<"' stroke='"<<stroke<<"' fill='"<<fill<<"' />";
+string svg_rect(double x, double y, double width, double height, string stroke, string fill) {
+    ostringstream strs;
+    strs << "\t";
+    strs << "<rect x='" << x << "' y='" << y
+         << "' width='" << width << "' height='" << height
+         << "' stroke='" << stroke << "' fill='" << fill
+         << "' />";
+    strs << endl;
+    string output = strs.str();
+    return output;
 }
-void svg_text(double left, double baseline, string text)
-{
-    cout << "<text x='" << left << "' y='"<<baseline<<"'>"<< text <<"</text>";
+
+string svg_text(double left, double baseline, string text) {
+    ostringstream strs;
+    strs << "\t";
+    strs << "<text x='" << left << "' y='" << baseline << "'>" << text << "</text>";
+    strs << endl;
+    string output = strs.str();
+    return output;
 }
-void show_histogram_svg(const vector<size_t> & bins)
-{
-    const auto IMAGE_WIDTH = 400;
+
+string show_histogram_svg(const vector<size_t> & bins) {
+    const auto IMAGE_WIDTH = 300;
     const auto IMAGE_HEIGHT = 300;
-    const auto TEXT_LEFT = 20;
-    const auto TEXT_BASELINE = 20;
-    const auto TEXT_WIDTH = 50;
-    const auto BIN_HEIGHT = 30;
-    const auto BLOCK_WIDTH = 10;
-    const size_t SCREEN_WIDTH = 80;
-    const size_t MAX_ASTERISK = SCREEN_WIDTH - 4 - 1;
-    svg_begin(IMAGE_WIDTH, IMAGE_HEIGHT);
-    double top = 0;
+    const auto TEXT_TOP = 20;
+    const auto TEXT_HEIGHT = 30;
+    const auto BIN_WIDTH = 30;
+    const auto TEXT_BASELINE = BIN_WIDTH / 2;
+    string output;
+    output = svg_begin(IMAGE_WIDTH, IMAGE_HEIGHT);
+    double left = 0;
     string stroke = "black";
     string fill = "blue";
     size_t max_count = 0;
-    for (size_t count : bins)
-    {
-        if (count > max_count)
-        {
+    for (size_t count : bins) {
+        if (count > max_count) {
             max_count = count;
         }
     }
-    const bool scaling_needed = max_count > MAX_ASTERISK;
-    for (size_t bin : bins)
-    {
-        if (scaling_needed)
-        {
-            const double scaling_factor = (double)MAX_ASTERISK / max_count;
-            bin = (size_t)(bin * scaling_factor);
-        }
-        const double bin_width = BLOCK_WIDTH * bin;
-        svg_text(TEXT_LEFT, top + TEXT_BASELINE, to_string(bin));
-        svg_rect(TEXT_WIDTH, top, bin_width, BIN_HEIGHT, stroke, fill);
-        top += BIN_HEIGHT;
+    for (size_t bin : bins) {
+        const double scaling_factor = (double)(IMAGE_HEIGHT - TEXT_HEIGHT) / max_count;
+        const double bin_height = bin * scaling_factor;
+        output += svg_text(left + TEXT_BASELINE, TEXT_TOP, to_string(bin));
+        output += svg_rect(left, TEXT_HEIGHT, BIN_WIDTH, bin_height, stroke, fill);
+        left += BIN_WIDTH;
     }
-    svg_end();
+    output += svg_end();
+    return output;
 }

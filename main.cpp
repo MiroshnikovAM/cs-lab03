@@ -5,6 +5,8 @@
 
 using namespace std;
 
+vector<double> input_numbers(size_t count);
+
 int main() {
 
     size_t number_count;
@@ -26,11 +28,17 @@ int main() {
     find_minmax(numbers, min, max);
 
     const auto bins = make_histogram(numbers, bin_count, min, max);
-
-    show_histogram_svg(bins);
+    cout << show_histogram_svg(bins);
 
     }
     return 0;
 }
 
+vector<double> input_numbers(size_t count) {
+    vector<double> result(count);
+    for (size_t i = 0; i < count; i++) {
+        cin >> result[i];
+    }
+    return result;
+}
 

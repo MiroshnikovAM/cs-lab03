@@ -18,14 +18,6 @@ void find_minmax(const vector<double> & numbers, double& min, double& max) {
     }
 }
 
-vector<double> input_numbers(size_t count) {
-    vector<double> result(count);
-    for (size_t i = 0; i < count; i++) {
-        cin >> result[i];
-    }
-    return result;
-}
-
 vector<size_t> make_histogram(const vector<double> & numbers, size_t bin_count, double min, double max) {
     vector<size_t> bins(bin_count);
     for (double number : numbers) {
