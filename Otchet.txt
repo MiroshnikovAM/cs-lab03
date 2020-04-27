@@ -1,0 +1,346 @@
+1) Отчёт по лабораторной работе №3
+Дисциплина: Разработка программного обеспечения систем управления
+Кафедра: УиТ
+Выполнил: Студент А-03-19 Мирошников Алексей
+
+ссылка на репозитарий: https://github.com/MiroshnikovAM/cs-lab03
+
+2) Постановка задачи (Вариант 10) :
+Отображайте гистограмму вертикально, с подписями сверху, по аналогии с заданием этого варианта в лабораторной работе 1.
+Предусмотреть расчет IMAGE_HEIGHT таким образом, чтобы вся гистограмма вмещалась в область рисунка.
+
+3) Логика решения варианта:
+
+Для вертикального отображения гистограммы необходимо её "транспонировать" и масштабировать.
+Для этого код подвергся небольшому рефакторингу с изменением номенклатуры.
+Если же раньше мы меняли height, то теперь меняем в цикле width.
+Вместо курсор-переменной top введена left.
+Дабы избежать изменений в подпрограммах, изменен порядок подачи аргументов при вызове
+функций svg_text и svg_rect.
+
+Для масштабирования:
+
+Убраны устаревшие элементы SCREEN_WIDTH и сопутствующие проверки scaling_needed.
+Теперь масштабирование производится всегда, причем "корзина" с максимальным количеством
+элементов всегда занимает всю высоту картинки, а остальные корзины масштабируются под неё.
+Добавлено несколько косметических изменений в код констант.
+
+Для тестирования :
+
+Согласно текста задания, цитирую:
+"должно быть минимум 2 теста, проверяющих работу вашего индивидуального задания."
+т.е. в моём случае индивидуальное задание касается исключительно svg-модуля, как и тесты.
+svg-модуль формирует по сути текстовый документ, и для теста функций пришлось их переработать.
+Если раньше svg-функции были типа void, и выводили всё в cout, то теперь они string.
+Формируемые таким образом строки конкатенируются и итоговая строка подаётся в поток вывода,
+формируя непосредственно текст svg-файла.
+Такой подход позволяет проверять данные, которые возвращают svg-функции.
+Написанные тесты проверяют случаи с разным количеством "попугаев" в корзинах-bins
+на сходство с ожидаемым выводом.
+
+Данный подход позволяет написать и более глубокие тесты при помощи парсеров, но, полагаю, это
+несколько выходит за рамки данной лабораторной работы.
+
+4) Исходный код всех модулей:
+
+============
+= main.cpp =
+============
+
+#include <iostream>
+#include <vector>
+#include "histogram.h"
+#include "svg_module.h"
+
+using namespace std;
+
+vector<double> input_numbers(size_t count);
+
+int main() {
+
+    size_t number_count;
+    cerr << "Enter number count: ";
+    cin >> number_count;
+
+    if (number_count == 0) {
+        cerr << "ERROR: Empty vector";
+    } else {
+
+    cerr << "Enter numbers: ";
+    const auto numbers = input_numbers(number_count);
+
+    size_t bin_count;
+    cerr << "Enter column count: ";
+    cin >> bin_count;
+
+    double min, max;
+    find_minmax(numbers, min, max);
+
+    const auto bins = make_histogram(numbers, bin_count, min, max);
+    cout << show_histogram_svg(bins);
+
+    }
+    return 0;
+}
+
+vector<double> input_numbers(size_t count) {
+    vector<double> result(count);
+    for (size_t i = 0; i < count; i++) {
+        cin >> result[i];
+    }
+    return result;
+}
+
+===============
+= histogram.h =
+===============
+
+#pragma once
+
+#include <vector>
+
+using namespace std;
+
+void find_minmax(const vector<double> & numbers, double& min, double& max);
+
+vector<size_t> make_histogram(const vector<double> & numbers, size_t bin_count, double min, double max);
+void show_histogram_text(const vector<size_t>& bins);
+
+=================
+= histogram.cpp =
+=================
+
+#include <vector>
+#include <iostream>
+
+using namespace std;
+
+void find_minmax(const vector<double> & numbers, double& min, double& max) {
+    if (numbers.size()) {
+        min = numbers[0];
+        max = numbers[0];
+        for (double number : numbers) {
+            if (number < min) {
+                min = number;
+            }
+            if (number > max) {
+                max = number;
+            }
+        }
+    }
+}
+
+vector<size_t> make_histogram(const vector<double> & numbers, size_t bin_count, double min, double max) {
+    vector<size_t> bins(bin_count);
+    for (double number : numbers) {
+        size_t bin = (size_t)((number - min) / (max - min) * bin_count);
+        if (bin == bin_count) {
+            bin--;
+        }
+        bins[bin]++;
+    }
+    return(bins);
+}
+
+void show_histogram_text(const vector<size_t>& bins) {
+    const size_t SCREEN_WIDTH = 80;
+    const size_t MAX_ASTERISK = SCREEN_WIDTH - 4 - 1;
+
+    size_t max_count = 0;
+    for (size_t count : bins) {
+        if (count > max_count) {
+            max_count = count;
+        }
+    }
+    const bool scaling_needed = max_count > MAX_ASTERISK;
+
+    for (size_t bin : bins) {
+        if (bin < 100) {
+            cout << ' ';
+        }
+        if (bin < 10) {
+            cout << ' ';
+        }
+        cout << bin << "|";
+
+        size_t height = bin;
+        if (scaling_needed) {
+            const double scaling_factor = (double)MAX_ASTERISK / max_count;
+            height = (size_t)(bin * scaling_factor);
+        }
+
+        for (size_t i = 0; i < height; i++) {
+            cout << '*';
+        }
+        cout << '\n';
+    }
+}
+
+================
+= svg_module.h =
+================
+
+#pragma once
+
+#include <vector>
+#include <string>
+
+using namespace std;
+
+string svg_begin(double width, double height);
+string svg_end();
+string svg_rect(double x, double y, double width, double height, string stroke, string fill);
+string svg_text(double left, double baseline, string text);
+string show_histogram_svg(const vector<size_t>& bins);
+
+==================
+= svg_module.cpp =
+==================
+
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+
+using namespace std;
+
+string svg_begin(double width, double height) {
+    ostringstream strs;
+    strs << "<?xml version='1.0' encoding='UTF-8'?>\n";
+    strs << "<svg ";
+    strs << "width='" << width << "' ";
+    strs << "height='" << height << "' ";
+    strs << "viewBox='0 0 " << width << " " << height << "' ";
+    strs << "xmlns='http://www.w3.org/2000/svg'>\n";
+    string output = strs.str();
+    return output;
+}
+
+string svg_end() {
+    ostringstream strs;
+    strs << "</svg>\n";
+    string output = strs.str();
+    return output;
+}
+
+string svg_rect(double x, double y, double width, double height, string stroke, string fill) {
+    ostringstream strs;
+    strs << "\t";
+    strs << "<rect x='" << x << "' y='" << y
+         << "' width='" << width << "' height='" << height
+         << "' stroke='" << stroke << "' fill='" << fill
+         << "' />";
+    strs << endl;
+    string output = strs.str();
+    return output;
+}
+
+string svg_text(double left, double baseline, string text) {
+    ostringstream strs;
+    strs << "\t";
+    strs << "<text x='" << left << "' y='" << baseline << "'>" << text << "</text>";
+    strs << endl;
+    string output = strs.str();
+    return output;
+}
+
+string show_histogram_svg(const vector<size_t> & bins) {
+    const auto IMAGE_WIDTH = 300;
+    const auto IMAGE_HEIGHT = 300;
+    const auto TEXT_TOP = 20;
+    const auto TEXT_HEIGHT = 30;
+    const auto BIN_WIDTH = 30;
+    const auto TEXT_BASELINE = BIN_WIDTH / 2;
+    string output;
+    output = svg_begin(IMAGE_WIDTH, IMAGE_HEIGHT);
+    double left = 0;
+    string stroke = "black";
+    string fill = "blue";
+    size_t max_count = 0;
+    for (size_t count : bins) {
+        if (count > max_count) {
+            max_count = count;
+        }
+    }
+    for (size_t bin : bins) {
+        const double scaling_factor = (double)(IMAGE_HEIGHT - TEXT_HEIGHT) / max_count;
+        const double bin_height = bin * scaling_factor;
+        output += svg_text(left + TEXT_BASELINE, TEXT_TOP, to_string(bin));
+        output += svg_rect(left, TEXT_HEIGHT, BIN_WIDTH, bin_height, stroke, fill);
+        left += BIN_WIDTH;
+    }
+    output += svg_end();
+    return output;
+}
+
+============
+= test.cpp =
+============
+
+#include "histogram.h"
+#include "svg_module.h"
+#include <cassert>
+#include <string>
+
+void test_positive() {
+    double min = 0;
+    double max = 0;
+    find_minmax({1, 2, 3}, min, max);
+    assert(min == 1);
+    assert(max == 3);
+}
+
+void test_negative() {
+    double min = 0;
+    double max = 0;
+    find_minmax({-1, -2, -3}, min, max);
+    assert(min == -3);
+    assert(max == -1);
+}
+
+void test_equal() {
+    double min = 0;
+    double max = 0;
+    find_minmax({1, 1, 1}, min, max);
+    assert(min == 1);
+    assert(max == 1);
+}
+
+void test_empty() {
+    double min = 0;
+    double max = 0;
+    find_minmax({}, min, max);
+    assert(min == 0);
+    assert(max == 0);
+}
+
+void test_scale1() {
+    string h1 = show_histogram_svg({1});
+    string expected_string = "<?xml version='1.0' encoding='UTF-8'?>\n";
+    expected_string += "<svg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'>\n";
+    expected_string += "\t<text x='15' y='20'>1</text>\n";
+    expected_string += "\t<rect x='0' y='30' width='30' height='270' stroke='black' fill='blue' />\n";
+    expected_string += "</svg>\n";
+    assert(h1 == expected_string);
+}
+
+void test_scale2() {
+    string h1 = show_histogram_svg({1, 2});
+    string expected_string = "<?xml version='1.0' encoding='UTF-8'?>\n";
+    expected_string += "<svg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'>\n";
+    expected_string += "\t<text x='15' y='20'>1</text>\n";
+    expected_string += "\t<rect x='0' y='30' width='30' height='135' stroke='black' fill='blue' />\n";
+    expected_string += "\t<text x='45' y='20'>2</text>\n";
+    expected_string += "\t<rect x='30' y='30' width='30' height='270' stroke='black' fill='blue' />\n";
+    expected_string += "</svg>\n";
+    assert(h1 == expected_string);
+}
+
+int main() {
+    test_positive();
+    test_negative();
+    test_equal();
+    test_empty();
+    test_scale1();
+    test_scale2();
+}
