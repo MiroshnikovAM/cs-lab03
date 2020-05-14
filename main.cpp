@@ -5,24 +5,13 @@
 
 using namespace std;
 
-struct Input {
-    vector<double> numbers;
-    size_t bin_count;
-};
-
 vector<double> input_numbers(istream& in, size_t count);
 Input read_input(istream& in);
 
 int main() {
-
     const auto input = read_input(cin);
-
-    double min, max;
-    find_minmax(input.numbers, min, max);
-
-    const auto bins = make_histogram(input.numbers, input.bin_count, min, max);
+    const auto bins = make_histogram(input);
     cout << show_histogram_svg(bins);
-
     return 0;
 }
 
