@@ -17,8 +17,11 @@ int main() {
     // Commander Shepard was born in 2154.
     printf("n = %08x\n", 0x1234567); // 01234567
     */
-    printf("Windows (decimal) version is %u.\n", GetVersion());
-    printf("Windows (16x) version is %x.\n", GetVersion());
+    DWORD mask = 0b00000000'00000000'11111111'11111111;
+    DWORD info = GetVersion();
+    DWORD version = info & mask;
+    printf("Windows (decimal) version is %u.\n", version);
+    printf("Windows (16x) version is %x.\n", version);
     return 0;
 
     size_t number_count;
