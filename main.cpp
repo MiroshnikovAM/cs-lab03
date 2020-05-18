@@ -36,6 +36,13 @@ int main() {
         DWORD build = platform;
         printf("Windows v%u.%u (build %u)\n", version_major, version_minor, build);
     }
+    char system_dir[MAX_PATH];
+    char computer_name[MAX_COMPUTERNAME_LENGTH + 1];
+    GetSystemDirectory(system_dir, MAX_PATH);
+    DWORD size = sizeof(computer_name);
+    GetComputerNameA(computer_name, &size);
+    printf("System directory: %s\n", system_dir); // System directory: C:\Windows
+    printf("Computer name: %s\n", computer_name);
     return 0;
 
     size_t number_count;
