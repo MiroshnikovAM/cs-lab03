@@ -5,8 +5,15 @@
 #include <curl/curl.h>
 #include <sstream>
 #include <string>
+#include <cstdio>
+#include <windows.h>
 
 using namespace std;
+
+vector<double> input_numbers(istream& in, size_t count);
+Input read_input(istream& in, bool prompt);
+Input download(const string& address);
+size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx);
 
 vector<double> input_numbers(istream& in, size_t count);
 Input read_input(istream& in, bool prompt);
@@ -58,7 +65,7 @@ Input read_input(istream& in, bool prompt) {
 }
 
 size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx) {
-    // TODO: дописывать данные к буферу.
+    // TODO: Г¤Г®ГЇГЁГ±Г»ГўГ ГІГј Г¤Г Г­Г­Г»ГҐ ГЄ ГЎГіГґГҐГ°Гі.
     size_t data_size = item_size * item_count;
     stringstream* buffer = reinterpret_cast<stringstream*>(ctx);
     (*buffer).write(reinterpret_cast<const char*>(items), data_size);
@@ -67,7 +74,7 @@ size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx) {
 
 Input download(const string& address) {
     stringstream buffer;
-    // TODO: заполнить буфер.
+    // TODO: Г§Г ГЇГ®Г«Г­ГЁГІГј ГЎГіГґГҐГ°.
     curl_global_init(CURL_GLOBAL_ALL);
     CURL* curl = curl_easy_init();
     if(curl) {
