@@ -10,10 +10,11 @@ vector<double> input_numbers(size_t count);
 
 int main() {
 
-    const char* name = "Lieutenant Victor";
-    int year = 5;
-    printf("%s has %d years of service.\n", name, year);
-    printf("n = %10x\n", 0x13456789); // __13456789 _ = space
+    const char* name = "Commander Shepard";
+    int year = 2154;
+    printf("%s was born in %d.\n", name, year);
+    // Commander Shepard was born in 2154.
+    printf("n = %08x\n", 0x1234567); // 01234567
     return 0;
 
     size_t number_count;
