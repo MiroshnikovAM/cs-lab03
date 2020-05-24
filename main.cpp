@@ -10,20 +10,27 @@
 
 using namespace std;
 
-vector<double> input_numbers(istream& in, size_t count);
-Input read_input(istream& in, bool prompt);
-Input download(const string& address);
-size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx);
+struct Options {
+    bool useDebugVerbose;
+    bool useHelp;
+    char* url;
+};
 
 vector<double> input_numbers(istream& in, size_t count);
 Input read_input(istream& in, bool prompt);
-Input download(const string& address);
+Input download(const string& address, bool useDebugVerbose);
 size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx);
+Options parse_args(int argc, char** argv);
 
 int main(int argc, char* argv[]) {
+    Options options = parse_args(argc, argv);
+    if (options.useHelp) {
+        cerr << "ToDo: Help & Usage" << endl;
+        exit(2);
+    }
     Input input;
-    if (argc > 1) {
-        input = download(argv[1]);
+    if (options.url) {
+        input = download(options.url, options.useDebugVerbose);
     } else {
         input = read_input(cin, true);
     }
@@ -49,7 +56,7 @@ Input read_input(istream& in, bool prompt) {
         cerr << "Enter number count: ";
     }
     size_t number_count;
-    in >> number_count; // cin ?
+    in >> number_count;
 
     if (prompt) {
         cerr << "Enter numbers: ";
@@ -59,26 +66,27 @@ Input read_input(istream& in, bool prompt) {
     if (prompt) {
         cerr << "Enter column count: ";
     }
-    in >> data.bin_count; // cin ?
+    in >> data.bin_count;
 
     return data;
 }
 
 size_t write_data(void* items, size_t item_size, size_t item_count, void* ctx) {
-    // TODO: äîïèñûâàòü äàííûå ê áóôåðó.
     size_t data_size = item_size * item_count;
     stringstream* buffer = reinterpret_cast<stringstream*>(ctx);
     (*buffer).write(reinterpret_cast<const char*>(items), data_size);
     return data_size;
 }
 
-Input download(const string& address) {
+Input download(const string& address, bool useDebugVerbose) {
     stringstream buffer;
-    // TODO: çàïîëíèòü áóôåð.
     curl_global_init(CURL_GLOBAL_ALL);
     CURL* curl = curl_easy_init();
     if(curl) {
         CURLcode res;
+        if (useDebugVerbose) {
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        }
         curl_easy_setopt(curl, CURLOPT_URL, address.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
@@ -90,4 +98,29 @@ Input download(const string& address) {
     }
     curl_easy_cleanup(curl);
     return read_input(buffer, false);
+}
+
+Options parse_args(int argc, char** argv) {
+    Options opt;
+    opt.url = 0;
+    opt.useHelp = false;
+    opt.useDebugVerbose = false;
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            if (strcmp(argv[i], "-verbose") == 0) {
+                opt.useDebugVerbose = true;
+            } else {
+                opt.useHelp = true;
+            }
+        } else {
+            opt.url = argv[i];
+        }
+    }
+    // Uncomment for NoURL behavior
+    /*
+    if (opt.url == 0) {
+        opt.useHelp = true;
+    }
+    */
+    return opt;
 }
